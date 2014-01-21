@@ -12,12 +12,13 @@ def m21(k_z,z):
 def m22(k_z,z):
     return ((k_z[1:]+k_z[:-1])/(2*k_z[:-1]))*numpy.exp(+1j*z*k_z[1:])
 
-def amplitudes(n,wavelength,k_z_1,k_z_2,thickness):
+def amplitudes(n,wavelength,k_z_1,k_z_2,thickness, sigma):
     """
     Calculates the amplitudes for a rough multilayer in specular geometry for the wave vectors k_z_1 and k_z_2
     @param n numpy array optical constants
     @param wavelength numpy array with all wavelength at which the theory should be evaluated
     """
+    
     EP1 = numpy.zeros((len(n),len(wavelength))) + 0j
     EM1 = numpy.zeros((len(n),len(wavelength))) + 0j
     EP2 = numpy.zeros((len(n),len(wavelength))) + 0j
@@ -26,11 +27,11 @@ def amplitudes(n,wavelength,k_z_1,k_z_2,thickness):
     EM1[-1,:] = 1 + 0j
     EM2[-1,:] = 1 + 0j
     
-    ROUGH1R = numpy.exp(-2*k_z_1[:-1]*k_z_1[1:]*0.5**2)
-    ROUGH1T = numpy.exp((k_z_1[:-1]-k_z_1[1:])**2*0.5*0.5**2)
+    ROUGH1R = numpy.exp(-2*k_z_1[:-1]*k_z_1[1:]*sigma**2)
+    ROUGH1T = numpy.exp((k_z_1[:-1]-k_z_1[1:])**2*0.5*sigma**2)
     #ROUGH1T = 1
-    ROUGH2R = numpy.exp(-2*k_z_2[:-1]*k_z_2[1:]*0.5**2)
-    ROUGH2T = numpy.exp((k_z_2[:-1]-k_z_2[1:])**2*0.5*0.5**2)
+    ROUGH2R = numpy.exp(-2*k_z_2[:-1]*k_z_2[1:]*sigma**2)
+    ROUGH2T = numpy.exp((k_z_2[:-1]-k_z_2[1:])**2*0.5*sigma**2)
     #ROUGH2T = 1
     
     M11K1 = m11(k_z_1,thickness)*(1/ROUGH1T)

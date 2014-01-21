@@ -1,7 +1,10 @@
 import numpy as np
 
-def C_lateral(qx, sigma, xi_lat, qz1, qz2):
-    return (4*np.pi*1*(sigma*xi_lat)**2/(1+qx**2*xi_lat**2)**2)#*np.exp(-0.5*(qz1**2+np.conj(qz2)**2)*sigma**2)
+def C_lateral(qx, sigma, xi_lat, H):
+    return (4*np.pi*H*(sigma*xi_lat)**2/(1+qx**2*xi_lat**2)**(1+H))
+
+def C_lateral_qz(qx, sigma, xi_lat, H, qz1, qz2):
+    return (4*np.pi*H*(sigma*xi_lat)**2/(1+qx**2*xi_lat**2)**(1+H))*np.exp(-0.5*(qz1**2+np.conj(qz2)**2)*sigma**2)
 
 def C_perp(l, m, thickness, xi_perp):
     sum = 0
