@@ -3,6 +3,7 @@ import numpy as np
 class HenkeData(object):
     
     def __init__(self, henkeDataFile):
+        #print "Henke Daten lesen"
         import csv
         file = open(henkeDataFile)
         data = csv.reader(file, delimiter=' ',skipinitialspace=1)

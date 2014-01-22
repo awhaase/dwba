@@ -36,8 +36,18 @@ def dwba(res, qx, t,n,wl, qz, xi_lat, xi_perp, angle_in, hurst, sigma):
                        +(r1[l]*r2[l]*np.conj(t1[m]*r2[m])+t1[l]*t2[l]*np.conj(r1[m]*t2[m]))
                        +(t1[l]*r2[l]*np.conj(t1[m]*r2[m])+r1[l]*t2[l]*np.conj(r1[m]*t2[m]))
                        +(r1[l]*t2[l]*np.conj(t1[m]*r2[m])+t1[l]*r2[l]*np.conj(r1[m]*t2[m]))
-                    )*C_perp(l,m,t[:,0],xi_perp)*C_lateral(qx, sigma, xi_lat, H)
+                    )*C_perp(l,m,t[:,0],xi_perp)*C_lateral(qx, sigma, xi_lat, H)*np.exp(-1j*qx*np.tan(np.radians(5))*z(l,m,t[:,0]))
     return (1/np.cos(np.radians(angle_in)))*(1/(16*np.pi**2))*sum
+
+def z(l,m,thickness):
+    sum = 0
+    if l > m:
+                sum = np.sum(thickness[m:(l-1)])
+    elif l < m:
+                sum = -np.sum(thickness[l:(m-1)])
+    else:
+                sum = thickness[l]
+    return sum
 
 def dwba_gisaxs(res, qx, qy, t,n,wl, qz, xi_lat, xi_perp, angle_in, hurst, sigma):
     r1,r2,t1,t2 = res
