@@ -67,11 +67,14 @@ def residual(p, henke, period, layer_num_per_unit, aoi_spec, wl_spec, y_spec, di
         pool_res.append(pool.apply_async(residual_dwba, [angle_in, angle_out, wl, y_meas, y_meas_err, stack, henke, period,xi_l, xi_p, H, s, b]))
     
   
-    print("iteration time: %f" % time.time())
+    print("parameters:")
+    print p
     results = []
     for res in pool_res:
         results.append(res.get())
+    #print results
     xi = np.concatenate(results)
-    pool.terminate()
+    pool.close()
+    pool.join()
     print np.sum(np.abs(xi)**2)/len(xi)
     return xi
