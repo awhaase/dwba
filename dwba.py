@@ -36,7 +36,26 @@ def dwba(res, qx, t,n,wl, qz, xi_lat, xi_perp, angle_in, hurst, sigma):
                        +(r1[l]*r2[l]*np.conj(t1[m]*r2[m])+t1[l]*t2[l]*np.conj(r1[m]*t2[m]))
                        +(t1[l]*r2[l]*np.conj(t1[m]*r2[m])+r1[l]*t2[l]*np.conj(r1[m]*t2[m]))
                        +(r1[l]*t2[l]*np.conj(t1[m]*r2[m])+t1[l]*r2[l]*np.conj(r1[m]*t2[m]))
-                    )*C_perp(l,m,t[:,0],xi_perp)*C_lateral(qx, sigma, xi_lat, H)*np.exp(-1j*qx*np.tan(np.radians(5))*z(l,m,t[:,0]))
+                    )*C_perp(l,m,t[:,0],xi_perp)*C_lateral(qx, sigma, xi_lat, H)*np.exp(-1j*qx*np.tan(np.radians(0))*z(l,m,t[:,0]))
+    return (1/np.cos(np.radians(angle_in)))*(1/(16*np.pi**2))*sum
+
+def dwba_tilted(res, qx, t, n, wl, qz, xi_lat, xi_perp, angle_in, hurst, sigma, beta):
+    r1,r2,t1,t2 = res
+    qz1, qz2, qz3, qz4 = qz
+    H=hurst
+    sum = 0
+    for l in xrange(len(t1)):
+        for m in xrange(len(t1)):
+            sum += (2*np.pi/wl)**4*(n[m,:]**2-n[m+1,:]**2)*np.conj(n[l,:]**2-n[l+1,:]**2)*(
+                        (t1[l]*t2[l]*np.conj(t1[m]*t2[m])+r1[l]*r2[l]*np.conj(r1[m]*r2[m]))
+                       +(t1[l]*t2[l]*np.conj(r1[m]*r2[m])+r1[l]*r2[l]*np.conj(t1[m]*t2[m]))
+                       +(t1[l]*r2[l]*np.conj(t1[m]*t2[m])+r1[l]*t2[l]*np.conj(r1[m]*r2[m]))
+                       +(r1[l]*t2[l]*np.conj(t1[m]*t2[m])+t1[l]*r2[l]*np.conj(r1[m]*r2[m]))
+                       +(t1[l]*t2[l]*np.conj(t1[m]*r2[m])+r1[l]*r2[l]*np.conj(r1[m]*t2[m]))
+                       +(r1[l]*r2[l]*np.conj(t1[m]*r2[m])+t1[l]*t2[l]*np.conj(r1[m]*t2[m]))
+                       +(t1[l]*r2[l]*np.conj(t1[m]*r2[m])+r1[l]*t2[l]*np.conj(r1[m]*t2[m]))
+                       +(r1[l]*t2[l]*np.conj(t1[m]*r2[m])+t1[l]*r2[l]*np.conj(r1[m]*t2[m]))
+                    )*C_perp(l,m,t[:,0],xi_perp)*C_lateral(qx, sigma, xi_lat, H)*np.exp(-1j*qx*np.tan(np.radians(beta))*z(l,m,t[:,0]))
     return (1/np.cos(np.radians(angle_in)))*(1/(16*np.pi**2))*sum
 
 def z(l,m,thickness):
