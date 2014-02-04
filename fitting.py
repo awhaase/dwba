@@ -6,6 +6,7 @@ from helper import *
 from multiprocessing import Pool
 import time
 
+
 def residual_spec(angle_in, wl_spec, y_spec, stack, henke, period, s):
     r = reflectivity.xrr(angle_in,
                      wl_spec,
@@ -55,17 +56,19 @@ def residual(p, henke, period, layer_num_per_unit, aoi_spec, wl_spec, y_spec, di
     @param diffuse: diffuse is a list of equally long np arrays of the shape
                     [[angle_in, angle_out, wavelength, y_meas, y_meas_err], ...]
     """
-    pool = Pool()
+    pool = Pool(5)
+    
     stack = p[:layer_num_per_unit]
     s, xi_l, xi_p, H, b = p[layer_num_per_unit:]
 
     pool_res = []
     pool_res.append(pool.apply_async(residual_spec, [aoi_spec, wl_spec, y_spec, stack, henke, period, s]))
+    #pool_res.append(residual_spec(aoi_spec, wl_spec, y_spec, stack, henke, period, s))
     
     for cut in diffuse:
         angle_in, angle_out, wl, y_meas, y_meas_err = cut
         pool_res.append(pool.apply_async(residual_dwba, [angle_in, angle_out, wl, y_meas, y_meas_err, stack, henke, period,xi_l, xi_p, H, s, b]))
-    
+        #pool_res.append(residual_dwba(angle_in, angle_out, wl, y_meas, y_meas_err, stack, henke, period,xi_l, xi_p, H, s, b))
   
     print("parameters:")
     print p
@@ -74,6 +77,7 @@ def residual(p, henke, period, layer_num_per_unit, aoi_spec, wl_spec, y_spec, di
         results.append(res.get())
     #print results
     xi = np.concatenate(results)
+    #xi = np.concatenate(pool_res)
     pool.close()
     pool.join()
     print np.sum(np.abs(xi)**2)/len(xi)
