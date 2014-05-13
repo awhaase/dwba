@@ -34,10 +34,10 @@ def calcQ(Theta_in, Theta_out, wl, refracDelta=None):
         return (qx, qy, qz, real_af, real_ai)
     
 def interpolate(qx_in, qz_in, imgArrayPoints):
-    qx_min=-0.5
-    qx_max=0.5
-    qz_min=0.85
-    qz_max=1.0
+    qx_min=np.min(qx_in)
+    qx_max=np.max(qx_in)
+    qz_min=np.max(qz_in)
+    qz_max=np.min(qz_in)
     q_dim_z = 1600
     q_dim_x = 1600
     qx = qx_in
@@ -57,7 +57,8 @@ def image(data, angle_in, angle_out, wl, cmap, show=True, aspect=0):
     wx=4.0
     wy=4.0
     
-    omega = 4*np.arctan(wx*wy/(2*r*np.sqrt(4*r**2+wx**2+wy**2)))
+    #omega = 4*np.arctan(wx*wy/(2*r*np.sqrt(4*r**2+wx**2+wy**2)))
+    omega=1
     
     for j in xrange(len(angle_in)):
         t_qx, t_qy, t_qz, af, ai = calcQ(angle_in[j], angle_out[j],wl)
@@ -69,15 +70,18 @@ def image(data, angle_in, angle_out, wl, cmap, show=True, aspect=0):
     if show:
         fig = figure()
         ax = fig.add_subplot(111)
-        
-        img = ax.imshow(omega*qmap, extent=(-0.5,0.5,0.85,1.0), cmap="gray", aspect=aspect)
+        qx_min=np.min(qx.flatten())
+        qx_max=np.max(qx.flatten())
+        qz_min=np.max(qz.flatten())
+        qz_max=np.min(qz.flatten())
+        img = ax.imshow(omega*qmap, extent=(qx_min,qx_max,qz_min,qz_max), cmap="gray", aspect=aspect)
         cb = colorbar(img, format="%.0e")
         cb.set_label("Intensity $I/I_0$")
         img.set_cmap(cmap)
         img.get_cmap().set_bad('black')
         #ax.axhspan(0.875,0.89, color='black')
         #ax.axvspan(-0.022,0.022,color='black')
-        ax.axis([-0.3,0.3,0.85,1.0])
+        ax.axis([-0.3,0.3,3.8,4.3])
         ax.set_xlabel('$q_x$ [1/nm]')
         ax.set_ylabel('$q_z$ [1/nm]')
         fig.canvas.draw()
@@ -103,6 +107,7 @@ def image2T(data, angles, wl):
     img = ax.imshow(qmap, extent=(-0.3,0.3,0.85,1.0), cmap="gray")
     img.set_cmap("gray")
     img.get_cmap().set_bad('black')
+    img.set_clim([0,5E-5])
     ax.axhspan(0.85,0.89, color='black')
     ax.axvspan(-0.022,0.022,color='black')
     ax.axis([-0.3,0.3,0.875,1.0])

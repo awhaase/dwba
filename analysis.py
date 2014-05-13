@@ -23,8 +23,8 @@ def IntegratedProfile(data, angle_in, angle_out, wl, qz, d_qz, d_a):
     
     #Raumwinkel Korrektur
     r=250.0
-    wx=4.0
-    wy=4.0
+    wx=4.5
+    wy=4.5
     
     omega = 4*np.arctan(wx*wy/(2*r*np.sqrt(4*r**2+wx**2+wy**2)))
     
@@ -56,8 +56,8 @@ def profileInQ(interpolation, qxgrid, qzgrid, direction, qx, qz, avrgQ, qx_error
             
         #Raumwinkel Korrektur
         r=250.0
-        wx=4.0
-        wy=4.0
+        wx=4.5
+        wy=4.5
         
         omega = 4*np.arctan(wx*wy/(2*r*np.sqrt(4*r**2+wx**2+wy**2)))
         

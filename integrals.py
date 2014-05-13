@@ -15,3 +15,13 @@ def C_perp(l, m, thickness, xi_perp):
     else:
                 sum = thickness[l]/xi_perp
     return np.exp(-sum)
+
+def C_perp_qx(l, m, thickness, xi_perp, qx):
+    sum = 0
+    if l > m:
+                sum = np.sum(thickness[m:(l-1)])*qx**2/xi_perp
+    elif l < m:
+                sum = np.sum(thickness[l:(m-1)])*qx**2/xi_perp
+    else:
+                sum = thickness[l]*qx**2/xi_perp
+    return np.exp(-sum)

@@ -22,6 +22,29 @@ class HenkeData(object):
     def getBeta(self, wavelength):
         nearest_wl_index = (np.abs(wavelength - self._data[:,0])).argmin()
         return self._data[nearest_wl_index,2]
+    
+class HenkeDataAFF(object):
+    
+    def __init__(self, henkeDataFile):
+        #print "Henke Daten lesen"
+        import csv
+        file = open(henkeDataFile)
+        data = csv.reader(file, delimiter="\t",skipinitialspace=1)
+        
+        HenkeData = []
+        for row in data:
+            if data.line_num > 2:
+                HenkeData.append([float(row[0]), float(row[1]), float(row[2])])
+        
+        self._data = np.array(HenkeData)
+        
+    def getDelta(self, wavelength):
+        nearest_wl_index = (np.abs(wavelength - self._data[:,0])).argmin()
+        return self._data[nearest_wl_index,1]
+    
+    def getBeta(self, wavelength):
+        nearest_wl_index = (np.abs(wavelength - self._data[:,0])).argmin()
+        return self._data[nearest_wl_index,2]
 
 def angle(theta,n_up,n_low):
     return np.arcsin(n_up*np.sin(theta)/n_low)
