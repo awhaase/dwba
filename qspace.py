@@ -54,8 +54,8 @@ def image(data, angle_in, angle_out, wl, cmap, show=True, aspect=0):
     
     #Raumwinkel Korrektur
     r=250.0
-    wx=4.0
-    wy=4.0
+    wx=4.5
+    wy=4.5
     
     #omega = 4*np.arctan(wx*wy/(2*r*np.sqrt(4*r**2+wx**2+wy**2)))
     omega=1
@@ -75,7 +75,7 @@ def image(data, angle_in, angle_out, wl, cmap, show=True, aspect=0):
         qz_min=np.max(qz.flatten())
         qz_max=np.min(qz.flatten())
         img = ax.imshow(omega*qmap, extent=(qx_min,qx_max,qz_min,qz_max), cmap="gray", aspect=aspect)
-        cb = colorbar(img, format="%.0e")
+        cb = colorbar(img, format="%.1e")
         cb.set_label("Intensity $I/I_0$")
         img.set_cmap(cmap)
         img.get_cmap().set_bad('black')

@@ -1,19 +1,32 @@
 import numpy as np
 
+
+from scipy.constants import c,pi
+from scipy.constants import physical_constants
+h_planck = physical_constants['Planck constant in eV s'][0]
+def nm2eV(wl):
+       return h_planck*c/(np.array(wl)*1E-9)
+   
+def plot_multilayer(axis, t, n, label=''):
+    axis.step([np.sum(t[:i]) for i in xrange(len(t))], np.real(n[1:]),where='post', label=label)
+    
+def plot_multilayer_imag(axis, t, n, label=''):
+    axis.step([np.sum(t[:i]) for i in xrange(len(t))], np.imag(n[1:]),where='post', label=label)
+
 class HenkeData(object):
     
     def __init__(self, henkeDataFile):
         #print "Henke Daten lesen"
         import csv
-        file = open(henkeDataFile)
-        data = csv.reader(file, delimiter=' ',skipinitialspace=1)
-        
-        HenkeData = []
-        for row in data:
-            if data.line_num > 2:
-                HenkeData.append([float(row[0]), float(row[1]), float(row[2])])
-        
-        self._data = np.array(HenkeData)
+        with open(henkeDataFile) as file:
+            data = csv.reader(file, delimiter=' ',skipinitialspace=1)
+            
+            HenkeData = []
+            for row in data:
+                if data.line_num > 2:
+                    HenkeData.append([float(row[0]), float(row[1]), float(row[2])])
+            
+            self._data = np.array(HenkeData)
         
     def getDelta(self, wavelength):
         nearest_wl_index = (np.abs(wavelength - self._data[:,0])).argmin()
@@ -23,20 +36,38 @@ class HenkeData(object):
         nearest_wl_index = (np.abs(wavelength - self._data[:,0])).argmin()
         return self._data[nearest_wl_index,2]
     
+class HenkeDataPD(object):
+    
+    def __init__(self, compound, wavelength): 
+        if compound is "vac":
+            self.n = np.ones(len(wavelength))
+        else:
+            import periodictable.xsf as xsf
+            wl = 1E1*np.array(wavelength) #nm to angstrom
+            f1,f2 = xsf.xray_sld(compound ,wavelength=wl)
+            n = np.conj(1 - wl**2/(2*np.pi)*(f1 + f2*1j)*1e-6)
+            self.n = np.array(n)
+        
+    def getDelta(self):
+        return np.real(1-self.n)
+    
+    def getBeta(self):
+        return np.imag(self.n)
+    
 class HenkeDataAFF(object):
     
     def __init__(self, henkeDataFile):
         #print "Henke Daten lesen"
         import csv
-        file = open(henkeDataFile)
-        data = csv.reader(file, delimiter="\t",skipinitialspace=1)
-        
-        HenkeData = []
-        for row in data:
-            if data.line_num > 2:
-                HenkeData.append([float(row[0]), float(row[1]), float(row[2])])
-        
-        self._data = np.array(HenkeData)
+        with open(henkeDataFile) as file:
+            data = csv.reader(file, delimiter="\t",skipinitialspace=1)
+            
+            HenkeData = []
+            for row in data:
+                if data.line_num > 2:
+                    HenkeData.append([float(row[0]), float(row[1]), float(row[2])])
+            
+            self._data = np.array(HenkeData)
         
     def getDelta(self, wavelength):
         nearest_wl_index = (np.abs(wavelength - self._data[:,0])).argmin()

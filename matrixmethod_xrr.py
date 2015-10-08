@@ -36,7 +36,8 @@ def amplitudes(n,wavelengths,k_z_1,thickness, sigma):
         EM1[i,:] = M11K1[i,:]*EM1[i+1,:] + M12K1[i,:]*EP1[i+1,:]
         EP1[i,:] = M21K1[i,:]*EM1[i+1,:] + M22K1[i,:]*EP1[i+1,:]
         
-    #t1 = EM1/EM1
-    r1 = EP1/EM1
+    t1 = EM1/EM1[0]
+    r1 = EP1/EM1[0]
     
-    return r1[0]
+    return r1[:], t1[:]
+   
