@@ -5,470 +5,61 @@ import numpy as np
 from helper import *
 from scipy.special import erf
 
-def fields(AOI, AOE, wavelengths, thicknesses, henkeFiles, periods, sigma, substrateHenkeFile, capthicknesses, caphenkes):
-    """
-    Returns the reflectivity curve of a multilayer.
-    
-    AOI:          angle of incidence in degrees from normal
-    wavelenths:   array of wavelength at which to calculate the reflectivity
-    thicknesses:  array of thicknesses for the individual layers in the multilayer in a single period
-    henkeFiles:   array of Henke data files with the same lengths as thicknesses containing the optical constants for the specified layers
-    periods:      number of periods
-    sigma:        mean square roughness
-    
-    
-    returns:      reflectivity array with dim wavelengths
-    """
-    
-    #preparations
-    n_vac = []
-    henkeSubstrate = []
-    sub = HenkeData(substrateHenkeFile)
-    for l in wavelengths:
-        n_vac.append(1)
-        henkeSubstrate.append((1-sub.getDelta(l))  +sub.getBeta(l)*1j)
-    n = []
-    t = []
-    
-    henkeLayer = []
-    for layerHenkeFile in henkeFiles:
-        henkeWavelength = []
-        henke = HenkeData(layerHenkeFile)
-        for l in wavelengths:
-            henkeWavelength.append((1-henke.getDelta(l)) + henke.getBeta(l)*1j)
-        henkeLayer.append(henkeWavelength)
-        
-    henkeLayerCap = []
-    for layerHenkeFile in caphenkes:
-        henkeWavelength = []
-        henke = HenkeData(layerHenkeFile)
-        for l in wavelengths:
-            henkeWavelength.append((1-henke.getDelta(l)) + henke.getBeta(l)*1j)
-        henkeLayerCap.append(henkeWavelength)
-        
-    
-    while periods>0:
-        n.append(np.array(henkeLayer))
-        t.append(np.array(thicknesses))
-        periods -= 1
-    n = np.array(n)
-    n = np.concatenate(n)
-    n = np.concatenate([[np.array(n_vac)],[np.array(henkeLayerCap)],n,[np.array(henkeSubstrate)]])
-    
-    
-    t = (np.array(t)).flatten()
-    t = np.concatenate([capthicknesses,t,[0]])
-    t = np.outer(t,np.ones(len(wavelengths)))
-    
-    #actual calculation
-    kz_AOI, kx_AOI = k_z_generator(AOI,np.array(wavelengths),n)
-    kz_AOE, kx_AOE = k_z_generator(AOE,np.array(wavelengths),n)
-    r1, r2, t1, t2 = matrixmethod.amplitudes_debeyewaller(n, np.array(wavelengths), np.array(kz_AOI), np.array(kz_AOE), t, sigma)
-    
-    qz = qz_gen(kz_AOI,kz_AOE)
-    qx = kx_AOI - kx_AOE
-    
-    return (r1, t1, r2, t2, qx, qz, t, n)
+def generate_mixlayers(n, t, intermix, sigma, mixlayers):
+    new_n = [np.array(n[0])]
+    new_t = [np.array(t[0])]
+    t = np.array(t, dtype=float)
+    t = t.reshape(len(t))
 
-def fields_debeyewaller(AOI, AOE, wavelengths, thicknesses, henkeFiles, periods, sigma, substrateHenkeFile, capthicknesses, caphenkes):
-    """
-    Returns the reflectivity curve of a multilayer.
-    
-    AOI:          angle of incidence in degrees from normal
-    wavelenths:   array of wavelength at which to calculate the reflectivity
-    thicknesses:  array of thicknesses for the individual layers in the multilayer in a single period
-    henkeFiles:   array of Henke data files with the same lengths as thicknesses containing the optical constants for the specified layers
-    periods:      number of periods
-    sigma:        mean square roughness
-    
-    
-    returns:      reflectivity array with dim wavelengths
-    """
-    
-    #preparations
-    n_vac = []
-    henkeSubstrate = []
-    sub = HenkeData(substrateHenkeFile)
-    for l in wavelengths:
-        n_vac.append(1)
-        henkeSubstrate.append((1-sub.getDelta(l))  +sub.getBeta(l)*1j)
-    n = []
-    t = []
-    
-    henkeLayer = []
-    for layerHenkeFile in henkeFiles:
-        henkeWavelength = []
-        henke = HenkeData(layerHenkeFile)
-        for l in wavelengths:
-            henkeWavelength.append((1-henke.getDelta(l)) + henke.getBeta(l)*1j)
-        henkeLayer.append(henkeWavelength)
-        
-    henkeLayerCap = []
-    for layerHenkeFile in caphenkes:
-        henkeWavelength = []
-        henke = HenkeData(layerHenkeFile)
-        for l in wavelengths:
-            henkeWavelength.append((1-henke.getDelta(l)) + henke.getBeta(l)*1j)
-        henkeLayerCap.append(henkeWavelength)
-        
-    
-    while periods>0:
-        n.append(np.array(henkeLayer))
-        t.append(np.array(thicknesses))
-        periods -= 1
-    n = np.array(n)
-    n = np.concatenate(n)
-    n = np.concatenate([[np.array(n_vac)],n,[np.array(henkeSubstrate)]])
-    
-    
-    t = (np.array(t)).flatten()
-    t = np.concatenate([t,[0]])
-    t = np.outer(t,np.ones(len(wavelengths)))
-    
-   
-    #actual calculation
-    kz_AOI, kx_AOI = k_z_generator(AOI,np.array(wavelengths),n)
-    kz_AOE, kx_AOE = k_z_generator(AOE,np.array(wavelengths),n)
-    r1, r2, t1, t2 = matrixmethod.amplitudes_debeyewaller(n, np.array(wavelengths), np.array(kz_AOI), np.array(kz_AOE), t, sigma)
-    
-    qz = qz_gen(kz_AOI,kz_AOE)
-    qx = kx_AOI - kx_AOE
-    
-    return (r1, t1, r2, t2, qx, qz, t, n)
+    x = np.linspace(-1,1,mixlayers)
+    grad_func = np.array((np.sin(x*np.pi/2)+1)*0.5)
+    grad_func = grad_func.reshape((len(grad_func),1))
 
-def fields_debeyewaller_densities(AOI, AOE, wavelengths, thicknesses, henkeFiles, periods, sigma, substrateHenkeFile, densities, capthicknesses, caphenkes, capdensities):
-    """
-    Returns the reflectivity curve of a multilayer.
-    
-    AOI:          angle of incidence in degrees from normal
-    wavelenths:   array of wavelength at which to calculate the reflectivity
-    thicknesses:  array of thicknesses for the individual layers in the multilayer in a single period
-    henkeFiles:   array of Henke data files with the same lengths as thicknesses containing the optical constants for the specified layers
-    periods:      number of periods
-    sigma:        mean square roughness
-    
-    
-    returns:      reflectivity array with dim wavelengths
-    """
-        #preparations
-    n_vac = []
-    henkeSubstrate = []
-    sub = HenkeData(substrateHenkeFile)
-    for l in wavelengths:
-        n_vac.append(1)
-        henkeSubstrate.append((1-sub.getDelta(l)) + sub.getBeta(l)*1j)
-    n = []
-    t = []
-    
-    henkeLayer = []
-    for i in xrange(len(henkeFiles)):
-        layerHenkeFile = henkeFiles[i]
-        density = densities[i]
-        henkeWavelength = []
-        henke = HenkeData(layerHenkeFile)
-        for l in wavelengths:
-            henkeWavelength.append((1-henke.getDelta(l)*density) + henke.getBeta(l)*density*1j)
-        henkeLayer.append(henkeWavelength)
-        
-    if capthicknesses is not None:
-        henkeLayerCap = []
-        for i in xrange(len(caphenkes)):
-            layerHenkeFile = caphenkes[i]
-            density = capdensities[i]
-            henkeWavelength = []
-            henke = HenkeData(layerHenkeFile)
-            for l in wavelengths:
-                henkeWavelength.append((1-henke.getDelta(l)*density) + henke.getBeta(l)*density*1j)
-            henkeLayerCap.append(henkeWavelength)
-        
-    
-    while periods>0:
-        n.append(np.array(henkeLayer))
-        t.append(np.array(thicknesses))
-        periods -= 1
-        
-    n = np.array(n)
-    n = np.concatenate(n)
-    t = (np.array(t)).flatten()
-    
-    if capthicknesses is None:
-        n = np.concatenate([[np.array(n_vac)],n,[np.array(henkeSubstrate)]])
-        t = np.concatenate([t,[0]])
-    else:
-        n = np.concatenate([[np.array(n_vac)],np.array(henkeLayerCap),n,[np.array(henkeSubstrate)]])
-        t = np.concatenate([np.array(capthicknesses),t,[0]])
-    
-    
-    
-    
-    t = np.outer(t,np.ones(len(wavelengths)))
-   
-    #actual calculation
-    kz_AOI, kx_AOI = k_z_generator(AOI,np.array(wavelengths),n)
-    kz_AOE, kx_AOE = k_z_generator(AOE,np.array(wavelengths),n)
-    r1, r2, t1, t2 = matrixmethod.amplitudes_debeyewaller(n, np.array(wavelengths), np.array(kz_AOI), np.array(kz_AOE), t, sigma)
-    
-    qz = qz_gen(kz_AOI,kz_AOE)
-    qx = kx_AOI - kx_AOE
-    
-    return (r1, t1, r2, t2, qx, qz, t, n)
+    #vacuum border case
+    #n_intermix = (n[0]*(1-intermix[0]) + n[1]*(intermix[0]) )
+    #grad_n = (1-grad_func)*new_n[-1] + grad_func*n_intermix
+    #grad_t = np.ones(mixlayers)*(sigma[0]/mixlayers)
+    #new_n.append(grad_n)
+    #new_n.append(np.array(n_intermix))
+    #new_t.append(grad_t)
+    #if any((t[0]-sigma[0]/2-sigma[1]/2)<0):
+                #raise ValueError('Layer thickness can not be smaller than zero')
+    #new_t.append(np.array(t[0]-sigma[0]/2-sigma[1]/2))
 
-def fields_debeyewaller_mixlayer(AOI, AOE, wavelengths, thicknesses, henkeFiles, periods, sigma, roughness, substrateHenkeFile, densities, intermix,  mixlayers, capthicknesses, caphenkes,capdensities):
-    """
-    Returns the reflectivity curve of a multilayer.
-    
-    AOI:          angle of incidence in degrees from normal
-    wavelenths:   array of wavelength at which to calculate the reflectivity
-    thicknesses:  array of thicknesses for the individual layers in the multilayer in a single period
-    henkeFiles:   array of Henke data files with the same lengths as thicknesses containing the optical constants for the specified layers
-    periods:      number of periods
-    sigma:        mean square roughness
-    
-    
-    returns:      reflectivity array with dim wavelengths
-    """
-    #preparations
-    n_vac = []
-    henkeSubstrate = []
-    sub = HenkeData(substrateHenkeFile)
-    for l in wavelengths:
-        n_vac.append(1)
-        henkeSubstrate.append((1-sub.getDelta(l)) + sub.getBeta(l)*1j)
-    n = []
-    t = []
-    
-    henkeLayer = []
-    for i in xrange(len(henkeFiles)):
-        layerHenkeFile = henkeFiles[i]
-        density = densities[i]
-        henkeWavelength = []
-        henke = HenkeData(layerHenkeFile)
-        for l in wavelengths:
-            henkeWavelength.append((1-henke.getDelta(l)*density) + henke.getBeta(l)*density*1j)
-        henkeLayer.append(henkeWavelength)
-        
-    if capthicknesses is not None:
-        henkeLayerCap = []
-        for i in xrange(len(caphenkes)):
-            layerHenkeFile = caphenkes[i]
-            density = capdensities[i]
-            henkeWavelength = []
-            henke = HenkeData(layerHenkeFile)
-            for l in wavelengths:
-                henkeWavelength.append((1-henke.getDelta(l)*density) + henke.getBeta(l)*density*1j)
-            henkeLayerCap.append(henkeWavelength)
-        
-    
-    while periods>0:
-        n.append(np.array(henkeLayer))
-        t.append(np.array(thicknesses))
-        periods -= 1
-        
-    n = np.array(n)
-    n = np.concatenate(n)
-    t = (np.array(t)).flatten()
-    
-    if capthicknesses is None:
-        n = np.concatenate([[np.array(n_vac)],n,[np.array(henkeSubstrate)]])
-        t = np.concatenate([t,[0]])
-    else:
-        n = np.concatenate([[np.array(n_vac)],np.array(henkeLayerCap),n,[np.array(henkeSubstrate)]])
-        t = np.concatenate([np.array(capthicknesses),t,[0]])
-    
-    
-    
-    
-    t = np.outer(t,np.ones(len(wavelengths)))  
-    
-    #introduction of mixlayers
-    new_n = [np.array([n[0]])]
-    new_t = []
-    for layer in xrange(1,n.shape[0]):
-        x = np.linspace(-1,1,mixlayers)
-        grad_func = np.array((np.sin(x*np.pi/2)+1)*0.5)
-        grad_func = grad_func.reshape((len(grad_func),1))
-        if layer<(n.shape[0]-1):
-            n_intermix = (n[layer,:]*(1-0.5*intermix[layer]) + n[layer+1,:]*0.5*intermix[layer])*0.5+(n[layer,:]*(1-0.5*intermix[layer-1]) + n[layer-1,:]*0.5*intermix[layer-1])*0.5
-        else:
-            n_intermix = n[layer,:]
+
+    #intermediate layers
+    for layer in xrange(1,n.shape[0]-1):
+        w1a = t[layer-1]/(t[layer-1]+t[layer])
+        w1b = t[layer]/(t[layer-1]+t[layer])
+        w2a = t[layer]/(t[layer]+t[layer+1])
+        w2b = t[layer+1]/(t[layer]+t[layer+1])
+        n_intermix = 0.5* (n[layer-1]*intermix[layer-1]*w1a + n[layer]*(1-intermix[layer-1])*w1b + n[layer]*(1-intermix[layer])*w2a + n[layer+1]*(intermix[layer])*w2b )
         grad_n = (1-grad_func)*new_n[-1] + grad_func*n_intermix
-        grad_t = np.ones(mixlayers).reshape(mixlayers,1)*(np.ones(len(t[0]))*sigma[layer-1]/mixlayers)
+        grad_t = np.ones(mixlayers)*(sigma[layer-1]/mixlayers)
         new_n.append(grad_n)
         new_t.append(grad_t)
         new_n.append(np.array([n_intermix]))
-        if layer<len(sigma):
-            new_t.append([t[layer-1,:]-sigma[layer-1]/2-sigma[layer]/2])
-            if any((t[layer-1,:]-sigma[layer-1]/2-sigma[layer]/2)<0):
+        if (t[layer]-sigma[layer-1]/2-sigma[layer]/2)<0:
                 raise ValueError('Layer thickness can not be smaller than zero')
-        else:
-            new_t.append([t[layer-1,:]])
-    
-    new_n = np.concatenate(new_n)
+        new_t.append(np.array([t[layer]-sigma[layer-1]/2-sigma[layer]/2]))
+
+
+    #substrate border case
+    n_intermix = n[-1]
+    grad_n = (1-grad_func)*new_n[-1] + grad_func*n_intermix
+    grad_t = np.ones(mixlayers)*(sigma[-1]/mixlayers)
+    new_n.append(grad_n)
+    new_t.append(grad_t)
+    new_n.append(np.array([n_intermix]))
+    new_t.append(np.array([t[-1]]))
+
+
+    new_n = np.vstack(new_n)
     new_t = np.concatenate(new_t)
-    
-    #actual calculation
-    kz_AOI, kx_AOI = k_z_generator(AOI,np.array(wavelengths),new_n)
-    kz_AOE, kx_AOE = k_z_generator(AOE,np.array(wavelengths),new_n)
-    r1, r2, t1, t2 = matrixmethod.amplitudes_debeyewaller(new_n, np.array(wavelengths), np.array(kz_AOI), np.array(kz_AOE), new_t, roughness)
-    
-    qz = qz_gen(kz_AOI,kz_AOE)
-    qx = kx_AOI - kx_AOE
-    
-    return (r1, t1, r2, t2, qx, qz, new_t, new_n)
+    new_t = new_t.reshape(len(new_t),1)
+    return new_n, new_t
 
-def fields_debeyewaller_gisaxs(AOI, AOE_x, AOE_y, wavelengths, thicknesses, henkeFiles, periods, sigma, substrateHenkeFile):
-    """
-    Returns the reflectivity curve of a multilayer.
-    
-    AOI:          angle of incidence in degrees from normal
-    wavelenths:   array of wavelength at which to calculate the reflectivity
-    thicknesses:  array of thicknesses for the individual layers in the multilayer in a single period
-    henkeFiles:   array of Henke data files with the same lengths as thicknesses containing the optical constants for the specified layers
-    periods:      number of periods
-    sigma:        mean square roughness
-    
-    
-    returns:      reflectivity array with dim wavelengths
-    """
-    
-    #preparations
-    n_vac = []
-    henkeSubstrate = []
-    sub = HenkeData(substrateHenkeFile)
-    for l in wavelengths:
-        n_vac.append(1)
-        henkeSubstrate.append((1-sub.getDelta(l))  +sub.getBeta(l)*1j)
-    n = []
-    t = []
-    
-    henkeLayer = []
-    for layerHenkeFile in henkeFiles:
-        henkeWavelength = []
-        henke = HenkeData(layerHenkeFile)
-        for l in wavelengths:
-            henkeWavelength.append((1-henke.getDelta(l)) + henke.getBeta(l)*1j)
-        henkeLayer.append(henkeWavelength)
-        
-    
-    while periods>0:
-        n.append(np.array(henkeLayer))
-        t.append(np.array(thicknesses))
-        periods -= 1
-    n = np.array(n)
-    n = np.concatenate(n)
-    n = np.concatenate([[np.array(n_vac)],n,[np.array(henkeSubstrate)]])
-    
-    
-    t = (np.array(t)).flatten()
-    t = np.concatenate([t,[0]])
-    t = np.outer(t,np.ones(len(wavelengths)))
-    
-    #actual calculation
-    kz_AOI, kx_AOI = k_z_generator(AOI,np.array(wavelengths),n)
-    kz_AOE, kx_AOE = k_z_generator(AOE_x,np.array(wavelengths),n)
-    r1, r2, t1, t2 = matrixmethod.amplitudes_debeyewaller(n, np.array(wavelengths), np.array(kz_AOI), np.array(kz_AOE), t, sigma)
-    
-    qz = qz_gen(kz_AOI,kz_AOE)
-    qx = kx_AOI - np.cos(np.radians(AOE_y))*kx_AOE
-    qy = np.sin(np.radians(AOE_y))*kx_AOE
-    
-    return (r1, t1, r2, t2, qx, qy, qz, t, n)
-
-def fields_ronly(AOI, wavelengths, thicknesses, henkeFiles, periods, sigma, substrateHenkeFile, densities, capthicknesses, caphenkes, capdensities, full=False):
-    """
-    Returns the reflectivity curve of a multilayer.
-    
-    AOI:          angle of incidence in degrees from normal
-    wavelenths:   array of wavelength at which to calculate the reflectivity
-    thicknesses:  array of thicknesses for the individual layers in the multilayer in a single period
-    henkeFiles:   array of Henke data files with the same lengths as thicknesses containing the optical constants for the specified layers
-    periods:      number of periods
-    sigma:        mean square roughness
-    
-    
-    returns:      reflectivity array with dim wavelengths
-    """
-    
-    #preparations
-    n_vac = []
-    henkeSubstrate = []
-    sub = HenkeData(substrateHenkeFile)
-    for l in wavelengths:
-        n_vac.append(1)
-        henkeSubstrate.append((1-sub.getDelta(l)) + sub.getBeta(l)*1j)
-    n = []
-    t = []
-    
-    henkeLayer = []
-    for i in xrange(len(henkeFiles)):
-        layerHenkeFile = henkeFiles[i]
-        density = densities[i]
-        henkeWavelength = []
-        henke = HenkeData(layerHenkeFile)
-        for l in wavelengths:
-            henkeWavelength.append((1-henke.getDelta(l)*density) + henke.getBeta(l)*density*1j)
-        henkeLayer.append(henkeWavelength)
-        
-    if capthicknesses is not None:
-        henkeLayerCap = []
-        for i in xrange(len(caphenkes)):
-            layerHenkeFile = caphenkes[i]
-            density = capdensities[i]
-            henkeWavelength = []
-            henke = HenkeData(layerHenkeFile)
-            for l in wavelengths:
-                henkeWavelength.append((1-henke.getDelta(l)*density) + henke.getBeta(l)*density*1j)
-            henkeLayerCap.append(henkeWavelength)
-        
-    
-    while periods>0:
-        n.append(np.array(henkeLayer))
-        t.append(np.array(thicknesses))
-        periods -= 1
-        
-    n = np.array(n)
-    n = np.concatenate(n)
-    t = (np.array(t)).flatten()
-    
-    if capthicknesses is None:
-        n = np.concatenate([[np.array(n_vac)],n,[np.array(henkeSubstrate)]])
-        t = np.concatenate([t,[0]])
-    else:
-        n = np.concatenate([[np.array(n_vac)],np.array(henkeLayerCap),n,[np.array(henkeSubstrate)]])
-        t = np.concatenate([np.array(capthicknesses),t,[0]])
-    
-    
-    
-    
-    t = np.outer(t,np.ones(len(wavelengths)))
-    
-    #actual calculation
-    kz_AOI, kx_AOI = k_z_generator(np.array(AOI),np.array(wavelengths),n)
-    r, trans = matrixmethod_xrr.amplitudes(n, np.array(wavelengths), np.array(kz_AOI), t, sigma)
-    
-    if full:
-        return r,n,t
-    else:
-        return r
-
-
-
-def xrr(AOI, wavelengths, thicknesses, henkeFiles, periods,sigma, substrateHenkeFile, densities, capthicknesses, caphenkes, capdensities,full_matrix=False):
-    if full_matrix:
-        r, n, t = fields_ronly(AOI, wavelengths, thicknesses, henkeFiles, periods, sigma, substrateHenkeFile, densities, capthicknesses, caphenkes, capdensities, full_matrix)
-    else:
-         r = fields_ronly(AOI, wavelengths, thicknesses, henkeFiles, periods, sigma, substrateHenkeFile, densities, capthicknesses, caphenkes, capdensities, full_matrix)
-    if not full_matrix:
-        return np.abs(r[0])**2
-    else:
-        return np.abs(r)**2, n, t
-
-
-### Mischschichtenansatz
-
-def fields_ronly_mixlayer(AOI, wavelengths, thicknesses, compounds, periods, sigma, roughness, substrate, densities, intermix,  mixlayers, capthicknesses, cap, capdensities):
-   
-    #preparations
+def generate_layer_system_matrix(AOI, wavelengths, thicknesses, compounds, periods, sigma, substrate, densities, intermix,  mixlayers, capthicknesses, cap, capdensities):
     n_vac = np.ones(len(wavelengths))
     henkeSubstrate = HenkeDataPD(substrate, np.array(wavelengths)).n
     n = []
@@ -501,56 +92,44 @@ def fields_ronly_mixlayer(AOI, wavelengths, thicknesses, compounds, periods, sig
     
     if capthicknesses is None:
         n = np.concatenate([[np.array(n_vac)],n,[np.array(henkeSubstrate)]])
-        t = np.concatenate([t,[0]])
+        t = np.concatenate([[0],t,[0]])
     else:
         n = np.concatenate([[np.array(n_vac)],np.array(LayerCap),n,[np.array(henkeSubstrate)]])
-        t = np.concatenate([np.array(capthicknesses),t,[0]])
+        t = np.concatenate([[0],np.array(capthicknesses),t,[0]])
 
-    t = np.outer(t,np.ones(len(wavelengths)))
+    #t = np.outer(t,np.ones(len(wavelengths)))
+    t = t.reshape(len(t),1)
    
-     
-    #introduction of mixlayers
-    new_n = [np.array([n[0]])]
-    new_t = []
-    for layer in xrange(1,n.shape[0]):
-        x = np.linspace(-1,1,mixlayers)
-        grad_func = np.array((np.sin(x*np.pi/2)+1)*0.5)
-        grad_func = grad_func.reshape((len(grad_func),1))
+    if mixlayers > 0:
+        n,t = generate_mixlayers(n, t, intermix, sigma, mixlayers)
         
-        if layer<(n.shape[0]-1):
-            n_intermix = (n[layer,:]*(1-0.5*intermix[layer]) + n[layer+1,:]*0.5*intermix[layer])*0.5+(n[layer,:]*(1-0.5*intermix[layer-1]) + n[layer-1,:]*0.5*intermix[layer-1])*0.5
-        else:
-            n_intermix = n[layer,:]
-        grad_n = (1-grad_func)*new_n[-1] + grad_func*n_intermix
-        grad_t = np.ones(mixlayers).reshape(mixlayers,1)*(np.ones(len(t[0]))*sigma[layer-1]/mixlayers)
-        new_n.append(grad_n)
-        new_t.append(grad_t)
-        new_n.append(np.ones(mixlayers).reshape(mixlayers,1)*np.array([n_intermix]))
-        if layer<len(sigma):
-            new_t.append(np.ones(mixlayers).reshape(mixlayers,1)*(np.array([t[layer-1,:]-sigma[layer-1]/2-sigma[layer]/2])/mixlayers))
-            if any((t[layer-1,:]-sigma[layer-1]/2-sigma[layer]/2)<0):
-                raise ValueError('Layer thickness can not be smaller than zero')
-        else:
-            new_t.append(np.ones(mixlayers).reshape(mixlayers,1)*np.array([t[layer-1,:]]))
+    return n,t
+
+def fields(AOI, wavelengths, thicknesses, compounds, periods, sigma, roughness, substrate, densities, intermix,  mixlayers, capthicknesses, cap, capdensities):
+   
+    n,t = generate_layer_system_matrix(AOI, wavelengths, thicknesses, compounds, periods, sigma, substrate, densities, intermix,  mixlayers, capthicknesses, cap, capdensities)
     
-    new_n = np.concatenate(new_n)
-    new_t = np.concatenate(new_t)
+    kz_AOI, kx_AOI = k_z_generator(np.array(AOI),np.array(wavelengths),n)
+    refl, trans = matrixmethod_xrr.amplitudes(n, np.array(wavelengths), np.array(kz_AOI), t[1:], roughness)
+    return refl, trans, n, t
+
+def fields_dwba(AOI, AOE, wavelengths, thicknesses, compounds, periods, sigma, roughness, substrate, densities, intermix,  mixlayers, capthicknesses, cap,capdensities):
+    n,t = generate_layer_system_matrix(AOI, wavelengths, thicknesses, compounds, periods, sigma, substrate, densities, intermix,  mixlayers, capthicknesses, cap, capdensities)
     
-    #actual calculation
-    kz_AOI, kx_AOI = k_z_generator(np.array(AOI),np.array(wavelengths),new_n)
-    refl, trans = matrixmethod_xrr.amplitudes(new_n, np.array(wavelengths), np.array(kz_AOI), new_t, roughness)
-    return refl, trans, new_n, new_t
+    kz_AOI, kx_AOI = k_z_generator(np.array(AOI),np.array(wavelengths),n)
+    kz_AOI, kx_AOI = k_z_generator(np.array(AOE),np.array(wavelengths),n)
+    r1, t1 = matrixmethod_xrr.amplitudes(n, np.array(wavelengths), np.array(kz_AOI), t[1:], roughness)
+    r2, t2 = matrixmethod_xrr.amplitudes(n, np.array(wavelengths), np.array(kz_AOE), t[1:], roughness)
+    
+    qz = qz_gen(kz_AOI,kz_AOE)
+    qx = kx_AOI - kx_AOE
+    
+    return r1, t1, r2, t2, qx, qz, t, n
+    
 
-
-
-def xrr_mixlayer(AOI, wavelengths, thicknesses, henkeFiles, periods, sigma, roughness,  substrateHenkeFile, densities, intermix, mixlayers, capthicknesses, caphenkes,capdensities, full_matrix=False, raw=False):
-    re, tr ,n, t = fields_ronly_mixlayer(AOI, wavelengths, thicknesses, henkeFiles, periods, sigma, roughness, substrateHenkeFile, densities, intermix, mixlayers, capthicknesses, caphenkes,capdensities)
-    if full_matrix:
-        return np.abs(re)**2,np.abs(tr)**2 , n, t
-    if raw:
-        return re,tr , n, t
-    else:
-        return np.abs(re[0])**2, n, t
+def xrr(AOI, wavelengths, thicknesses, compounds, periods, sigma, roughness,  substrate, densities, intermix, mixlayers, capthicknesses, cap,capdensities):
+    re, tr ,n, t = fields(AOI, wavelengths, thicknesses, compounds, periods, sigma, roughness, substrate, densities, intermix, mixlayers, capthicknesses, cap,capdensities)
+    return np.abs(re[0])**2
     
 
     
