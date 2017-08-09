@@ -36,8 +36,8 @@ def dwba_tilted_qx(res, qx, t, n, wl, qz, xi_lat, xi_perp, angle_in, hurst, sigm
 
 
 @numba.jit(nopython=True, cache=False)
-def dwba_tilted_qx_fast(res, qx, t, n, wl, qz, xi_lat, xi_perp, angle_in, hurst, sigma, beta):
-    r1,t1,r2,t2 = res
+def dwba_tilted_qx_fast(res, wl, angle_in, xi_lat, xi_perp, hurst, sigma, beta):
+    r1, t1, r2, t2, qx, qz, t, n = res
     r1,t1,r2,t2 =r1[:-1,:],t1[:-1,:],r2[:-1,:],t2[:-1,:]
     qz1, qz2, qz3, qz4 = qz
     H=hurst

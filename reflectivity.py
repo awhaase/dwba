@@ -135,7 +135,7 @@ def generate_layer_system_matrix(AOI, wavelengths, thicknesses, compounds, perio
     
     while periods>0:
         n.append(np.array(henkeLayer))
-        t.append(np.array(thicknesses)+(periods*drift-200*drift))
+        t.append(np.array(thicknesses))
         periods -= 1
         
     n = np.array(n)
@@ -199,7 +199,7 @@ def fields(AOI, wavelengths, thicknesses, compounds, periods, sigma, roughness, 
              system represented through the optical constants in n and the thicknesses of each layer in t. The reflectance
              measured from the sample can be calculated by abs(refl[0])**2.
     """
-    n,t = generate_layer_system_matrix(AOI, wavelengths, thicknesses, compounds, periods, sigma, substrate, densities, intermix,  mixlayers, capthicknesses, cap, capdensities, drift)
+    n,t = generate_layer_system_matrix(AOI, wavelengths, thicknesses, compounds, periods, sigma, substrate, densities, intermix,  mixlayers, capthicknesses, cap, capdensities)
     
     kz_AOI, kx_AOI = k_z_generator(np.array(AOI),np.array(wavelengths),n)
     refl, trans = matrixmethod.amplitudes(n, np.array(wavelengths), np.array(kz_AOI), t[1:], roughness)
@@ -234,7 +234,7 @@ def xrr(AOI, wavelengths, thicknesses, compounds, periods, sigma, roughness,  su
     the numpy array with the reflectivity values.
     :return: reflectivity, corresponding to abs(refl[0])**2 in the function fields.
     """
-    re, tr ,n, t = fields(AOI, wavelengths, thicknesses, compounds, periods, sigma, roughness, substrate, densities, intermix, mixlayers, capthicknesses, cap,capdensities, drift)
+    re, tr ,n, t = fields(AOI, wavelengths, thicknesses, compounds, periods, sigma, roughness, substrate, densities, intermix, mixlayers, capthicknesses, cap,capdensities)
     return np.abs(re[0])**2
     
 
