@@ -1,6 +1,5 @@
 import matrixmethod
-import matrixmethod_xrr
-reload(matrixmethod_xrr)
+reload(matrixmethod)
 import numpy as np
 from helper import *
 import numba
@@ -110,7 +109,7 @@ def fields(AOI, wavelengths, thicknesses, compounds, periods, sigma, roughness, 
     n,t = generate_layer_system_matrix(AOI, wavelengths, thicknesses, compounds, periods, sigma, substrate, densities, intermix,  mixlayers, capthicknesses, cap, capdensities, drift)
     
     kz_AOI, kx_AOI = k_z_generator(np.array(AOI),np.array(wavelengths),n)
-    refl, trans = matrixmethod_xrr.amplitudes(n, np.array(wavelengths), np.array(kz_AOI), t[1:], roughness)
+    refl, trans = matrixmethod.amplitudes(n, np.array(wavelengths), np.array(kz_AOI), t[1:], roughness)
     return refl, trans, n, t
 
 def fields_dwba(AOI, AOE, wavelengths, thicknesses, compounds, periods, sigma, roughness, substrate, densities, intermix,  mixlayers, capthicknesses, cap,capdensities):
@@ -118,8 +117,8 @@ def fields_dwba(AOI, AOE, wavelengths, thicknesses, compounds, periods, sigma, r
     
     kz_AOI, kx_AOI = k_z_generator(np.array(AOI),np.array(wavelengths),n)
     kz_AOE, kx_AOE = k_z_generator(np.array(AOE),np.array(wavelengths),n)
-    r1, t1 = matrixmethod_xrr.amplitudes(n, np.array(wavelengths), np.array(kz_AOI), t[1:], roughness)
-    r2, t2 = matrixmethod_xrr.amplitudes(n, np.array(wavelengths), np.array(kz_AOE), t[1:], roughness)
+    r1, t1 = matrixmethod.amplitudes(n, np.array(wavelengths), np.array(kz_AOI), t[1:], roughness)
+    r2, t2 = matrixmethod.amplitudes(n, np.array(wavelengths), np.array(kz_AOE), t[1:], roughness)
     
     qz = qz_gen(kz_AOI,kz_AOE)
     qx = kx_AOI - kx_AOE

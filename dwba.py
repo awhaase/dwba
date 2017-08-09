@@ -1,7 +1,6 @@
 import numpy as np
 import integrals
 import numba
-from matrixmethod import *
 
 def dwba_tilted_qx(res, qx, t, n, wl, qz, xi_lat, xi_perp, angle_in, hurst, sigma, beta):
 
