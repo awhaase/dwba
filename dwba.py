@@ -74,7 +74,6 @@ def dwba_tilted_qx_fast_mhe(res, qx, t, n, wl, qz, xi_lat, xi_perp, angle_in, hu
             else:
                 z_mat[l,m] = tf[l]
 
-    Cl = integrals.C_lateral(qx, sigma, xi_lat, H)
     Cl = np.ones(len(Cl))
     return dwba_tilted_qx_fast_inner(qx, n, t1, r1, t2, r2, z_mat, xi_perp, Cl, beta, angle_in, wl)
 
@@ -96,7 +95,6 @@ def dwba_tilted_qx_fast_mhe_sk(res, qx, t, n, wl, qz, xi_lat, xi_perp, angle_in,
             else:
                 z_mat[l,m] = tf[l]
 
-    Cl = integrals.C_lateral(qx, sigma, xi_lat, H)
     Cl = np.ones(len(Cl))
     return dwba_tilted_qx_fast_inner_sk(qx, n, t1, r1, t2, r2, z_mat, xi_perp, Cl, beta, angle_in, wl)
 
@@ -106,14 +104,7 @@ def dwba_tilted_qx_fast_inner(qx, n, t1, r1, t2, r2, z_mat, xi_perp, Cl, beta, a
     sum = np.empty(qx.shape, dtype=np.complex128)
     for i in xrange(len(qx)):
         n1 = n[:-1,i]
-        #n2 = n[1:,i]
-        
-        #left = (n1**2-n2**2)*(t1[:,i]+r1[:,i])*(t2[:,i]+r2[:,i])
-        #right = np.conj(left)
 
-        #o = np.outer(left,right)
-        
-        
         size = len(n1)
         o = np.empty((size,size), dtype=np.complex128)
         
@@ -130,14 +121,7 @@ def dwba_tilted_qx_fast_inner_sk(qx, n, t1, r1, t2, r2, z_mat, xi_perp, Cl, beta
     sum = np.empty(qx.shape, dtype=np.complex128)
     for i in xrange(len(qx)):
         n1 = n[:-1,i]
-        #n2 = n[1:,i]
-        
-        #left = (n1**2-n2**2)*(t1[:,i]+r1[:,i])*(t2[:,i]+r2[:,i])
-        #right = np.conj(left)
 
-        #o = np.outer(left,right)
-        
-        
         size = len(n1)
         o = np.empty((size,size), dtype=np.complex128)
         
@@ -160,8 +144,6 @@ def dwba_tilted_qx_fast_me(res, qx, t, n, wl, qz, xi_lat, xi_perp, angle_in, hur
         return z(l,m,tf)
 
     z_mat = np.fromfunction(np.vectorize(zz),(len(t1),len(t1)))
-    #z_mat = np.outer(np.ones(len(t1)),np.ones(len(t1)))
-    #Cp_mat = C_perp_qx_zmat(z_mat,xi_perp,qx)
     Cl = 1.0
     
     sum_arr = []
@@ -234,17 +216,6 @@ def dwba_tilted_qx_sk(res, qx, t, n, wl, qz, xi_lat, xi_perp, angle_in, hurst, s
                     )*C_perp_qx(l,m,tf,xi_perp,qx)*C_lateral(qx, sigma, xi_lat, H)*np.exp(-1j*qx*np.tan(np.radians(beta))*z(l,m,tf)))
     return (1/np.cos(np.radians(angle_in)))*(1/(16*np.pi**2))*(2*np.pi/wl)**4*sum
 
-#def dwba_sk(res, qx, t, n, wl, qz, xi_lat, xi_perp, angle_in, hurst, sigma, beta):
-    #r1,r2,t1,t2 = res
-    #qz1, qz2, qz3, qz4 = qz
-    #H=hurst
-    #sum = 0
-    #for l in xrange(len(t1)):
-        #for m in xrange(len(t1)):
-            #sum += (2*np.pi/wl)**4*(n[m,:]**2-n[m+1,:]**2)*np.conj(n[l,:]**2-n[l+1,:]**2)*(
-                        #(t1[l]*t2[l]*np.conj(t1[m]*t2[m]))
-                         #)*C_perp_qx(l,m,t[:,0],xi_perp,qx)*C_lateral(qx, sigma, xi_lat, H)*np.exp(-1j*qx*np.tan(np.radians(beta))*z(l,m,t[:,0]))
-    #return (1/np.cos(np.radians(angle_in)))*(1/(16*np.pi**2))*sum
 
 def z(l,m,thickness):
     sum = 0
