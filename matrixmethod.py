@@ -54,10 +54,10 @@ def amplitudes(n,wavelengths,k_z_1,thickness, sigma):
               contains the indices of refraction in the formal delta + i*beta. The first row n[0,:] of the array is the
               vacuum index of refraction, the last row n[-1,:] is the substrates index of refraction.
     :param wavelengths: numpy array with wavelengths in nm
-    :param k_z: numpy array
+    :param k_z: numpy array with the same shape as n. Result of the function helper.k_z_generator.
     :param thickness: numpy array with thicknesses of the layers in the stack. Has to be identical in lengths to the
-                      shape of the first dimension of n (len(n[:,0]). The first and last element, corresponding to the
-                      vacuum and substrate thickness have to be set to 0.
+                      shape of the first dimension of n (len(n[:,0]) minus one. The last element, corresponding to the
+                      substrate thickness has to be set to 0.
     :param sigma: float indicating the Nevot-Croce factor OR numpy array indicating different Nevot-Croce fators for
                   each interface.
     :return: tuple of numpy arrays (R,T) with field complex field amplitudes at the top interfaces of the individual
@@ -79,10 +79,10 @@ def amplitudes_single_sigma(n, wavelengths, k_z, thickness, sigma):
               contains the indices of refraction in the formal delta + i*beta. The first row n[0,:] of the array is the
               vacuum index of refraction, the last row n[-1,:] is the substrates index of refraction.
     :param wavelengths: numpy array with wavelengths in nm
-    :param k_z: numpy array
+    :param k_z: numpy array with the same shape as n. Result of the function helper.k_z_generator.
     :param thickness: numpy array with thicknesses of the layers in the stack. Has to be identical in lengths to the
-                      shape of the first dimension of n (len(n[:,0]). The first and last element, corresponding to the
-                      vacuum and substrate thickness have to be set to 0.
+                      shape of the first dimension of n (len(n[:,0]) minus one. The last element, corresponding to the
+                      substrate thickness has to be set to 0.
     :param sigma: float indicating the Nevot-Croce factor.
     :return: tuple of numpy arrays (R,T) with field complex field amplitudes at the top interfaces of the individual
              layers. The expression abs(R[0])**2 is thus the reflectivity measured in vacuum above the sample.
@@ -127,10 +127,10 @@ def amplitudes_multiple_sigma(n, wavelengths, k_z, thickness, sigma):
               contains the indices of refraction in the formal delta + i*beta. The first row n[0,:] of the array is the
               vacuum index of refraction, the last row n[-1,:] is the substrates index of refraction.
     :param wavelengths: numpy array with wavelengths in nm
-    :param k_z: numpy array
+    :param k_z: numpy array with the same shape as n. Result of the function helper.k_z_generator.
     :param thickness: numpy array with thicknesses of the layers in the stack. Has to be identical in lengths to the
-                      shape of the first dimension of n (len(n[:,0]). The first and last element, corresponding to the
-                      vacuum and substrate thickness have to be set to 0.
+                      shape of the first dimension of n (len(n[:,0]) minus one. The last element, corresponding to the
+                      substrate thickness has to be set to 0.
     :param sigma: numpy array with individual Nevot-Croce factors for each interface. The lengths has to correspond to
                   the number of interfaces in the system.
     :return: tuple of numpy arrays (R,T) with field complex field amplitudes at the top interfaces of the individual
