@@ -1,12 +1,15 @@
 import numpy as np
+import numba
 
-
+@numba.jit(nopython=True, cache=False)
 def C_lateral(qx, sigma, xi_lat, H):
     return (4*np.pi*H*(sigma*xi_lat)**2/(1+qx**2*xi_lat**2)**(1+H))
 
+@numba.jit(nopython=True, cache=False)
 def C_lateral_qz(qx, sigma, xi_lat, H, qz1, qz2):
     return (4*np.pi*H*(sigma*xi_lat)**2/(1+qx**2*xi_lat**2)**(1+H))*np.exp(-0.5*(qz1**2+np.conj(qz2)**2)*sigma**2)
 
+@numba.jit(nopython=True, cache=False)
 def C_perp(l, m, thickness, xi_perp):
     sum = 0
     if l > m:
@@ -17,6 +20,7 @@ def C_perp(l, m, thickness, xi_perp):
                 sum = thickness[l]/xi_perp
     return np.exp(-sum)
 
+@numba.jit(nopython=True, cache=False)
 def C_perp_qx(l, m, thickness, xi_perp, qx):
     sum = 0
     if l > m:
@@ -27,8 +31,10 @@ def C_perp_qx(l, m, thickness, xi_perp, qx):
                 sum = thickness[l]*qx**2/xi_perp
     return np.exp(-sum)
 
+@numba.jit(nopython=True, cache=False)
 def C_perp_qx_zmat(zmat, xi_perp, qx):
     return np.exp(-abs(zmat[:,:,np.newaxis])*qx**2/xi_perp)
 
+@numba.jit(nopython=True, cache=False)
 def C_perp_qxi_zmat(zmat, xi_perp, qxi):
-    return np.exp(-abs(zmat)*qxi**2/xi_perp)
+    return np.exp(-np.abs(zmat)*qxi**2/xi_perp)

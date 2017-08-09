@@ -1,11 +1,11 @@
-from IPython.parallel import Client
 import numpy as np
 import random
 import matplotlib as plt
 import csv
-from IPython.parallel import Client
+from ipyparallel import Client
 
 class Schwarm:
+    
     
     
     def __init__(self, obj_func, N, K, eval_func=None):
@@ -15,8 +15,8 @@ class Schwarm:
         self.xi = [-1.0 for i in xrange(N)]
         
         #DEBUG
-        self.xi_euv = [-1.0 for i in xrange(N)]
-        self.xi_xrr = [-1.0 for i in xrange(N)]
+        #self.xi_euv = [-1.0 for i in xrange(N)]
+        #self.xi_xrr = [-1.0 for i in xrange(N)]
         
         self.X  = [[] for i in xrange(N)]
         self.P_id =  [[] for i in xrange(N)]
@@ -24,9 +24,14 @@ class Schwarm:
         self.V_id = [[] for i in xrange(N)]
         self.xi_best_gloabl = -1.0
         self.eval_func = eval_func
+        self._externalCheckFunction = None
         
     def _checkBoundaries(self, i):
-        return all( ((np.array(self.X[i])+np.array(self.V_id[i]))>= np.array(self.lower_boundary)) & ((np.array(self.X[i])+np.array(self.V_id[i]))<= np.array(self.upper_boundary)) )
+        if self._externalCheckFunction is not None:
+            external = self._externalCheckFunction(np.array(self.X[i])+np.array(self.V_id[i]))
+        else:
+            external = True      
+        return all( ((np.array(self.X[i])+np.array(self.V_id[i]))>= np.array(self.lower_boundary)) & ((np.array(self.X[i])+np.array(self.V_id[i]))<= np.array(self.upper_boundary)) & external)
         
     def initialize(self, lower_boundary_vector, upper_boundary_vector, weights):
         self.lower_boundary = lower_boundary_vector
@@ -44,6 +49,9 @@ class Schwarm:
                 
     
     def reset_velocity(self, i):
+        #self.V_id[i] = [-elem for elem in self.V_id[i]]
+        ##print "reflected"
+        #if not self._checkBoundaries(i):
         while True:
                 self.V_id[i] = [random.uniform(-1.0,1.0)*weight for weight in self.weights]
                 if self._checkBoundaries(i):
@@ -300,8 +308,9 @@ class Schwarm:
         print self.P_gl
         return self.P_gl
     
-    def run_dwba(self, arguments,maxiter=100, fig=None, savename='pso', verbose=True, hawk=100, plotmodulo=10, silent=False, plot_save=True):
+    def run_dwba(self, arguments,maxiter=100, fig=None, savename='pso', verbose=True, hawk=100, plotmodulo=10, silent=False, plot_save=True, external_check=None):
 
+        self._externalCheckFunction = external_check
         
         cl = Client(profile='main')
         pool = cl.load_balanced_view()
@@ -331,23 +340,19 @@ class Schwarm:
                 call_the_hawk = 0
             for i in xrange(self.N):
                 self.X[i] = [self.X[i][j] + self.V_id[i][j] for j in xrange(len(self.X[i]))]
-            # print "Particle %i" % i
-                #print self.X[i]
-                #args = (self.X[i], arguments[0],arguments[1],arguments[2],arguments[3],arguments[4])
                 if arguments:
                     args = (self.X[i],) + arguments
                     handles.append(pool.apply_async(self.obj_func, *args))
                 else:
                     handles.append(pool.apply_async(self.obj_func, self.X[i]))
                 
-                #print "submitted"
             res = []
             
             new_xi = []
            
             for i in xrange(len(handles)):
                 tmp = handles[i].get()
-                new_xi = (np.sum(np.abs(tmp)**2)/len(tmp))
+                new_xi = np.sum(np.abs(tmp))
                 if ((new_xi < self.xi[i]) | (self.xi[i] <= 0.0)):
                     self.P_id[i] = self.X[i]
                     self.xi[i] = new_xi
@@ -363,7 +368,7 @@ class Schwarm:
                 self.xi_best_gloabl = self.xi[best_global]
                 call_the_hawk = 0
                 if not silent:
-                    print "%i: new global minimum found xi = %f, euv= %f, xrr= %f, hawk put back to sleep" % (iter, self.xi_best_gloabl, self.xi_euv[best_global],  self.xi_xrr[best_global])
+                    print "%i: new global minimum xi = %e" % (iter, self.xi_best_gloabl)
                     print self.P_gl
             
             self._calculateVelocity()
@@ -377,12 +382,8 @@ class Schwarm:
         pool.results.clear()
         cl.results.clear()
         cl.metadata.clear()
-        #pool2.results.clear()
-        #cl2.results.clear()
-        #cl2.metadata.clear()
         cl.close()
-       # cl2.close()
-        print "Best global xi: %f" % self.xi_best_gloabl
+        print "Best global xi: %e" % self.xi_best_gloabl
         print self.P_gl
         return self.P_gl
     

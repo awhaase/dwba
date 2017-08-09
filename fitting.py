@@ -5,7 +5,7 @@ import dwba
 reload(dwba)
 from helper import *
 from multiprocessing import Pool
-from IPython.parallel import Client
+from ipyparallel import Client
 import time
 import matplotlib as plt
 
@@ -16,30 +16,28 @@ def residual_spec(angle_in, wl_spec, y_spec, stack, henke, period, s, densities,
                      stack,
                      henke,
                      period,
-                     s,
-                     "henke_Si.csv", densities, capthicknesses, caphenkes, capdensities)
+                     None, s,
+                     "Si", densities, None, 0, capthicknesses, caphenkes, capdensities)
      
-    #if all(thickness>0 for thickness in stack) and all(sig>=0 for sig in s) and all(dens <=1.0 for dens in densities):
-    err_spec = (y_spec-r)
-    #else:
-    #    err_spec = (y_spec/np.nanmax(y_spec)-r/np.nanmax(y_spec))*1e6
-    #print np.sum(np.abs(err_spec)**2)/len(err_spec)
+
+    err_spec = np.abs(y_spec-r)/(0.003*np.nanmax(y_spec))
+    err_spec = err_spec**2/len(err_spec)
+
     return err_spec
 
-def residual_spec_log(angle_in, wl_spec, y_spec, stack, henke, period, s, densities,capthicknesses, caphenkes, capdensities,clip_min):
+def residual_spec_log(angle_in, wl_spec, y_spec, stack, henke, period, s, densities,capthicknesses, caphenkes, capdensities,clip_min, xrr_err):
     r = reflectivity.xrr(angle_in,
                      wl_spec,
                      stack,
                      henke,
                      period,
-                     s,
-                     "henke_Si.csv", densities,capthicknesses, caphenkes, capdensities)
+                     None, s,
+                     "Si", densities, None, 0, capthicknesses, caphenkes, capdensities)
      
-    #if all(thickness>0 for thickness in stack) and all(sig>=0 for sig in s):
-    err_spec = np.abs((np.log10(y_spec)-np.log10(np.clip(r,clip_min,5.0))))
-    #else:
-    #    err_spec = np.abs((y_spec/np.nanmax(y_spec)-r/np.nanmax(y_spec))*1e6)
-    #print np.sum(np.abs(err_spec)**2)/len(err_spec)
+
+    err_spec = np.abs((np.log10(y_spec)-np.log10(np.clip(r,clip_min,5.0))))/np.abs(np.log10(y_spec+xrr_err)-np.log10(np.clip(y_spec-xrr_err,clip_min,1.0)))
+    err_spec = err_spec**2/len(err_spec)
+
     return err_spec
 
 
@@ -119,20 +117,22 @@ def residual_dwba_densities(angle_in, angle_out, wl, y_meas, y_meas_err, stack, 
     wy=4.5
     
     omega = 4*np.arctan(wx*wy/(2*r*np.sqrt(4*r**2+wx**2+wy**2)))
-    r = reflectivity.fields_debeyewaller_densities(angle_in,angle_out,
+    r = reflectivity.fields_dwba(angle_in,angle_out,
                      wl,
                      stack,
                      henke,
                      period,
-                     sigma,
-                     "henke_Si.csv",
+                     None, sigma,
+                     "Si",
                      densities,
+                     None, 0,
                      capthicknesses,
                      caphenkes,
                      capdensities)
     r1, t1, r2, t2, qx, qz, t, n = r
     spec = (r1, t1, r2, t2)
-    dw = dwba.dwba_tilted_qx(spec, qx, t, n, wl, qz, xi_l, xi_p, angle_in, H, s, b)
+
+    dw = dwba.dwba_tilted_qx_fast(spec, qx, t, n, wl, qz, xi_l, xi_p, angle_in, H, s, b)
     err = y_meas/y_meas_err - omega*np.real(dw)/y_meas_err
 
     return err, omega*np.real(dw), y_meas, y_meas_err

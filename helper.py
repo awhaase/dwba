@@ -1,5 +1,5 @@
 import numpy as np
-
+import numba
 
 from scipy.constants import c,pi
 from scipy.constants import physical_constants
@@ -10,11 +10,11 @@ import periodictable.xsf as xsf
 def nm2eV(wl):
        return h_planck*c/(np.array(wl)*1E-9)
    
-def plot_multilayer(axis, t, n, label=''):
-    axis.step([np.sum(t[:i]) for i in xrange(len(t))], np.real(n[:]),where='post', label=label)
+def plot_multilayer(axis, t, n, label='', color=None, style='solid', corr=0.0):
+    axis.step(np.array([np.sum(t[:i+1]) for i in xrange(len(t))])-corr, np.real(n[:]),where='post', label=label, color=color, linestyle=style)
     
 def plot_multilayer_imag(axis, t, n, label=''):
-    axis.step([np.sum(t[:i]) for i in xrange(len(t))], np.imag(n[:]),where='post', label=label)
+    axis.step([np.sum(t[:i+1]) for i in xrange(len(t))], np.imag(n[:]),where='post', label=label)
   
 henke_densities = [
     ['', 'AgBr', 6.473],
@@ -134,14 +134,37 @@ class HenkeData(object):
 class HenkeDataPD(object):
     
     def __init__(self, compound, wavelength): 
-        if compound is "vac":
-            self.n = np.ones(len(wavelength))
+        if type(compound) is not str:
+                elements = compound[0].split()
+                mixture = compound[1]
+                try:
+                    dens = compound[2]
+                except:
+                    dens = None
+                ns = []
+                for i in xrange(len(elements)):
+                    cm = elements[i]
+                    if dens is None:
+                        density = compound_density(cm, True)
+                    else:
+                        if dens[i] is None:
+                            density = compound_density(cm, True)
+                        else:
+                            density = compound_density(dens[i], True)
+                    wl = 1E1*np.array(wavelength) #nm to angstrom
+                    f1,f2 = xsf.xray_sld(cm ,wavelength=wl, density=density)
+                    n = np.conj(1 - wl**2/(2*np.pi)*(f1 + f2*1j)*1e-6)
+                    ns.append(np.array(n))
+                self.n = (mixture*ns[1]+(1-mixture)*ns[0])
         else:
-            density = compound_density(compound, True)
-            wl = 1E1*np.array(wavelength) #nm to angstrom
-            f1,f2 = xsf.xray_sld(compound ,wavelength=wl, density=density)
-            n = np.conj(1 - wl**2/(2*np.pi)*(f1 + f2*1j)*1e-6)
-            self.n = np.array(n)
+            if compound is "vac":
+                self.n = np.ones(len(wavelength))
+            else:
+                density = compound_density(compound, True)
+                wl = 1E1*np.array(wavelength) #nm to angstrom
+                f1,f2 = xsf.xray_sld(compound ,wavelength=wl, density=density)
+                n = np.conj(1 - wl**2/(2*np.pi)*(f1 + f2*1j)*1e-6)
+                self.n = np.array(n)
         
     def getDelta(self):
         return np.real(1-self.n)
