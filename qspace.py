@@ -61,30 +61,3 @@ def image(data, angle_in, angle_out, wavelengths):
     qmap, qxgrid, qzgrid = interpolate(qx.flatten(),qz.flatten(),data.flatten())
 
     return qmap, qxgrid, qzgrid
-
-def image2T(data, angles, wl):
-    qx=[]
-    qz=[]
-    for j in xrange(len(angles)):
-        t_qx, t_qy, t_qz, af, ai = calcQ(6.75, angles[j],wl)
-        qx.append(t_qx)
-        qz.append(t_qz)
-    qx = np.array(qx)
-    qz = np.array(qz)
-    qmap = interpolate(qx.flatten(),qz.flatten(),data.flatten())
-    fig = figure()
-    ax = fig.add_subplot(111)
-    img = ax.imshow(qmap, extent=(-0.3,0.3,0.85,1.0), cmap="gray")
-    img.set_cmap("gray")
-    img.get_cmap().set_bad('black')
-    img.set_clim([0,5E-5])
-    ax.axhspan(0.85,0.89, color='black')
-    ax.axvspan(-0.022,0.022,color='black')
-    ax.axis([-0.3,0.3,0.875,1.0])
-    ax.set_xlabel('$q_x$ [1/nm]')
-    ax.set_ylabel('$q_z$ [1/nm]')
-    fig.canvas.draw()
-    #corr = np.multiply(np.array([50,5]),np.array(index, float)) + [0,0.5]
-    #text = '$i=%i, \\, \\xi_p = %.1f$ nm, $\\xi_l = %.1f$ nm' % (i,corr[i,0], corr[i,1])
-    #x.annotate(text, xy=(-0.28,0.98), color='red')
-    return fig, qmap
