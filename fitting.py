@@ -132,7 +132,7 @@ def residual_dwba_densities(angle_in, angle_out, wl, y_meas, y_meas_err, stack, 
     r1, t1, r2, t2, qx, qz, t, n = r
     spec = (r1, t1, r2, t2)
 
-    dw = dwba.dwba_tilted_qx_fast(spec, qx, t, n, wl, qz, xi_l, xi_p, angle_in, H, s, b)
+    dw = dwba.dwba(spec, qx, t, n, wl, qz, xi_l, xi_p, angle_in, H, s, b)
     err = y_meas/y_meas_err - omega*np.real(dw)/y_meas_err
 
     return err, omega*np.real(dw), y_meas, y_meas_err
