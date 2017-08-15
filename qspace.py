@@ -4,7 +4,7 @@ from scipy.interpolate import griddata
 
 def calcQ(Theta_in, Theta_out, wl, refracDelta=None):
         """
-        Calculate the q coordinates for given image array and experimental
+        Private function. Calculate the q coordinates for given image array and experimental
         parameters.
         """
 
@@ -34,6 +34,13 @@ def calcQ(Theta_in, Theta_out, wl, refracDelta=None):
         return (qx, qy, qz, real_af, real_ai)
     
 def interpolate(qx_in, qz_in, imgArrayPoints):
+    """
+    Private function. Perform q_x, q_z interpolation for dwba data calculated in angles.
+    :param qx_in: q_x array
+    :param qz_in: q_z array
+    :param imgArrayPoints: measured or calculated diffuse scattering intensities at this point
+    :return: interpolated map with qx_coord and qz_coord arrays for corresponding coordinates.
+    """
     qx_min=np.min(qx_in)
     qx_max=np.max(qx_in)
     qz_min=np.max(qz_in)
@@ -49,6 +56,15 @@ def interpolate(qx_in, qz_in, imgArrayPoints):
 
 
 def image(data, angle_in, angle_out, wavelengths):
+    """
+    Interpolates given diffuse scattering data measured or calculated for specified angles and wavelenghts and returns
+    them in q_x and q_z coordinate system.
+    :param data: diffuse scattering data
+    :param angle_in: corrsponding incidence angles
+    :param angle_out: correspoding exit angles
+    :param wavelengths: corresponding wavelengths
+    :return: map in q-space, grid of q_x values, grid of q_z values
+    """
     qx=[]
     qz=[]
     
